@@ -8,7 +8,8 @@ import {
 import { ProductProvider } from "./context/ProductContext";
 import { ChatProvider } from "./context/ChatContext";
 import { AuthProvider } from "./context/AuthContext";
-
+import ErrorBoundary from "./utils/ErrorBoundary"; // Import ErrorBoundary
+import { Toaster } from "react-hot-toast";
 // Pages
 import HomePage from "./pages/HomePage";
 import ProductsPage from "./pages/ProductPage";
@@ -34,82 +35,85 @@ function App() {
         <AuthProvider>
           <ProductProvider>
             <ChatProvider>
-              <Routes>
-                <Route path="/" element={<HomePage />} />
-                <Route path="/products" element={<ProductsPage />} />
-                <Route path="/products/:id" element={<ProductDetailPage />} /> 
+              <ErrorBoundary> {/* 👈 Wrap Routes here */}
+                <Routes>
+                  <Route path="/" element={<HomePage />} />
+                  <Route path="/products" element={<ProductsPage />} />
+                  <Route path="/products/:id" element={<ProductDetailPage />} /> 
 
-                {/* Auth Routes */}
-                 <Route path="/login" element={<LoginPage />} />
-                <Route path="/register" element={<RegisterPage />} /> 
+                  {/* Auth Routes */}
+                  <Route path="/login" element={<LoginPage />} />
+                  <Route path="/register" element={<RegisterPage />} /> 
 
-                {/* Protected Routes */}
-                 <Route
-                  path="/profile-setup"
-                  element={
-                    <>
-                      <SignedIn>
-                        <ProfileSetupPage />
-                      </SignedIn>
-                      <SignedOut>
-                        <RedirectToSignIn />
-                      </SignedOut>
-                    </>
-                  }
-                />
-                <Route
-                  path="/profile"
-                  element={
-                    <>
-                      <SignedIn>
-                        <ProfilePage />
-                      </SignedIn>
-                      <SignedOut>
-                        <RedirectToSignIn />
-                      </SignedOut>
-                    </>
-                  }
-                />
-                <Route
-                  path="/dashboard"
-                  element={
-                    <>
-                      <SignedIn>
-                        <DashboardPage />
-                      </SignedIn>
-                      <SignedOut>
-                        <RedirectToSignIn />
-                      </SignedOut>
-                    </>
-                  }
-                />
-                <Route
-                  path="/sell"
-                  element={
-                    <>
-                      <SignedIn>
-                        <SellProductPage />
-                      </SignedIn>
-                      <SignedOut>
-                        <RedirectToSignIn />
-                      </SignedOut>
-                    </>
-                  }
-                />
-                <Route
-                  path="/messages"
-                  element={
-                    <>
-                      <SignedIn>
-                        <MessagesPage />
-                      </SignedIn>
-                      <SignedOut>
-                        <RedirectToSignIn />
-                      </SignedOut>
-                    </>
-                  }
-                />
-              </Routes>
+                  {/* Protected Routes */}
+                  <Route
+                    path="/profile-setup"
+                    element={
+                      <>
+                        <SignedIn>
+                          <ProfileSetupPage />
+                        </SignedIn>
+                        <SignedOut>
+                          <RedirectToSignIn />
+                        </SignedOut>
+                      </>
+                    }
+                  />
+                  <Route
+                    path="/profile"
+                    element={
+                      <>
+                        <SignedIn>
+                          <ProfilePage />
+                        </SignedIn>
+                        <SignedOut>
+                          <RedirectToSignIn />
+                        </SignedOut>
+                      </>
+                    }
+                  />
+                  <Route
+                    path="/dashboard"
+                    element={
+                      <>
+                        <SignedIn>
+                          <DashboardPage />
+                        </SignedIn>
+                        <SignedOut>
+                          <RedirectToSignIn />
+                        </SignedOut>
+                      </>
+                    }
+                  />
+                  <Route
+                    path="/sell"
+                    element={
+                      <>
+                        <SignedIn>
+                          <SellProductPage />
+                        </SignedIn>
+                        <SignedOut>
+                          <RedirectToSignIn />
+                        </SignedOut>
+                      </>
+                    }
+                  />
+                  <Route
+                    path="/messages"
+                    element={
+                      <>
+                        <SignedIn>
+                          <MessagesPage />
+                        </SignedIn>
+                        <SignedOut>
+                          <RedirectToSignIn />
+                        </SignedOut>
+                      </>
+                    }
+                  />
+                </Routes>
+              </ErrorBoundary> 
+              <Toaster position="top-right" reverseOrder={false}></Toaster>
             </ChatProvider>
           </ProductProvider>
         </AuthProvider>

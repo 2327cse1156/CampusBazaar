@@ -20,8 +20,8 @@ const ProfileSetupPage: React.FC = () => {
 
     try {
       await user?.update({
-        publicMetadata: {
-          ...user.publicMetadata,
+        unsafeMetadata: {
+          ...user.unsafeMetadata,
           college: formData.college,
           phoneNumber: formData.phoneNumber,
           address: formData.address

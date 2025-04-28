@@ -1,5 +1,6 @@
 import React from 'react';
 import clsx from 'clsx';
+import { Loader2 } from 'lucide-react'; // Use Lucide spinner icon (or replace)
 
 interface ButtonProps {
   children: React.ReactNode;
@@ -9,6 +10,7 @@ interface ButtonProps {
   onClick?: () => void;
   type?: 'button' | 'submit' | 'reset';
   disabled?: boolean;
+  isLoading?: boolean; // <-- NEW
   className?: string;
   icon?: React.ReactNode;
 }
@@ -21,10 +23,12 @@ const Button: React.FC<ButtonProps> = ({
   onClick,
   type = 'button',
   disabled = false,
+  isLoading = false, // <-- NEW default
   className = '',
   icon
 }) => {
-  const baseStyle = 'inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2';
+  const baseStyle =
+    'inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2';
 
   const variantStyles = {
     primary: 'bg-emerald-600 text-white hover:bg-emerald-700 focus:ring-emerald-500',
@@ -43,18 +47,24 @@ const Button: React.FC<ButtonProps> = ({
     <button
       type={type}
       onClick={onClick}
-      disabled={disabled}
+      disabled={disabled || isLoading} // also disable when loading
       className={clsx(
         baseStyle,
         variantStyles[variant],
         sizeStyles[size],
         fullWidth && 'w-full',
-        disabled && 'opacity-50 cursor-not-allowed',
+        (disabled || isLoading) && 'opacity-50 cursor-not-allowed',
         className
       )}
     >
-      {icon && <span className="mr-2">{icon}</span>}
-      {children}
+      {isLoading ? (
+        <Loader2 className="animate-spin h-5 w-5" /> // spinner only when loading
+      ) : (
+        <>
+          {icon && <span className="mr-2">{icon}</span>}
+          {children}
+        </>
+      )}
     </button>
   );
 };

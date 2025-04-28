@@ -4,22 +4,20 @@ import { Send, Image, Info } from 'lucide-react';
 
 interface ChatInterfaceProps {
   conversation: Conversation | null;
-  messages: ChatMessage[];
   currentUser: User | null;
-  onSendMessage: (message: string) => Promise<void>;
   isLoading?: boolean;
 }
 
 const ChatInterface: React.FC<ChatInterfaceProps> = ({
   conversation,
-  messages,
   currentUser,
-  onSendMessage,
-  isLoading = false
+  isLoading = false,
 }) => {
   const [message, setMessage] = useState('');
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isSending, setIsSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const socketRef = useRef<WebSocket | null>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -29,18 +27,52 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     scrollToBottom();
   }, [messages]);
 
-  const handleSendMessage = async (e: React.FormEvent) => {
+  useEffect(() => {
+    if (!conversation || !currentUser) return;
+
+    // Create WebSocket connection
+    socketRef.current = new WebSocket(`wss://yourserver.com/ws/chat/${conversation.id}`);
+
+    // On receiving a message
+    socketRef.current.onmessage = (event) => {
+      const newMessage: ChatMessage = JSON.parse(event.data);
+      setMessages((prevMessages) => [...prevMessages, newMessage]);
+    };
+
+    socketRef.current.onopen = () => {
+      console.log('WebSocket connected');
+    };
+
+    socketRef.current.onclose = () => {
+      console.log('WebSocket disconnected');
+    };
+
+    socketRef.current.onerror = (error) => {
+      console.error('WebSocket error:', error);
+    };
+
+    return () => {
+      socketRef.current?.close();
+    };
+  }, [conversation?.id, currentUser?.id]);
+
+  const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
     if (!message.trim() || !currentUser || !conversation) return;
 
-    setIsSending(true);
-    try {
-      await onSendMessage(message);
+    if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
+      const outgoingMessage: ChatMessage = {
+        id: Date.now().toString(), // You can change it based on backend
+        conversationId: conversation.id,
+        senderId: currentUser.id,
+        content: message,
+        timestamp: new Date().toISOString(),
+      };
+      socketRef.current.send(JSON.stringify(outgoingMessage));
+      setMessages((prev) => [...prev, outgoingMessage]); // Optimistic UI update
       setMessage('');
-    } catch (error) {
-      console.error('Failed to send message:', error);
-    } finally {
-      setIsSending(false);
+    } else {
+      console.error('WebSocket not connected');
     }
   };
 
@@ -56,7 +88,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
   const getOtherParticipant = () => {
     if (!conversation || !currentUser) return null;
-    return conversation.participants.find(p => p.id !== currentUser.id);
+    return conversation.participants.find((p) => p.id !== currentUser.id);
   };
 
   if (!conversation) {
@@ -78,10 +110,13 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       {/* Chat Header */}
       <div className="flex items-center justify-between p-4 border-b bg-gray-50">
         <div className="flex items-center space-x-3">
-          <img 
-            src={otherParticipant?.avatar || 'https://images.pexels.com/photos/2379005/pexels-photo-2379005.jpeg?auto=compress&cs=tinysrgb&w=100'} 
-            alt={otherParticipant?.name} 
-            className="w-10 h-10 rounded-full object-cover" 
+          <img
+            src={
+              otherParticipant?.avatar ||
+              'https://images.pexels.com/photos/2379005/pexels-photo-2379005.jpeg?auto=compress&cs=tinysrgb&w=100'
+            }
+            alt={otherParticipant?.name}
+            className="w-10 h-10 rounded-full object-cover"
           />
           <div>
             <h3 className="font-medium text-gray-800">{otherParticipant?.name}</h3>
@@ -97,19 +132,11 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
         {isLoading ? (
           <div className="flex justify-center py-4">
+            {/* Skeleton loading */}
             <div className="animate-pulse space-y-4 w-full max-w-md">
               <div className="flex items-end">
-                <div className="h-8 w-8 rounded-full bg-gray-300 flex-shrink-0 mr-2"></div>
-                <div className="bg-gray-300 rounded-lg p-3 w-3/4">
-                  <div className="h-3 bg-gray-200 rounded w-3/4 mb-2"></div>
-                  <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-                </div>
-              </div>
-              <div className="flex items-end justify-end">
-                <div className="bg-gray-300 rounded-lg p-3 w-3/4">
-                  <div className="h-3 bg-gray-200 rounded w-3/4 mb-2"></div>
-                  <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-                </div>
+                <div className="h-8 w-8 rounded-full bg-gray-300 mr-2"></div>
+                <div className="bg-gray-300 rounded-lg p-3 w-3/4"></div>
               </div>
             </div>
           </div>
@@ -127,9 +154,11 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
               <div className="space-y-4">
                 {messages.map((msg, index) => {
                   const isCurrentUser = msg.senderId === currentUser?.id;
-                  const showDate = index === 0 || 
-                    new Date(messages[index-1].timestamp).toDateString() !== new Date(msg.timestamp).toDateString();
-                  
+                  const showDate =
+                    index === 0 ||
+                    new Date(messages[index - 1].timestamp).toDateString() !==
+                      new Date(msg.timestamp).toDateString();
+
                   return (
                     <React.Fragment key={msg.id}>
                       {showDate && (
@@ -142,21 +171,28 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                       <div className={`flex ${isCurrentUser ? 'justify-end' : 'justify-start'}`}>
                         <div className="flex items-end max-w-xs md:max-w-md">
                           {!isCurrentUser && (
-                            <img 
-                              src={otherParticipant?.avatar || 'https://images.pexels.com/photos/2379005/pexels-photo-2379005.jpeg?auto=compress&cs=tinysrgb&w=100'} 
-                              alt={otherParticipant?.name} 
-                              className="w-8 h-8 rounded-full mr-2 flex-shrink-0 object-cover" 
+                            <img
+                              src={
+                                otherParticipant?.avatar ||
+                                'https://images.pexels.com/photos/2379005/pexels-photo-2379005.jpeg?auto=compress&cs=tinysrgb&w=100'
+                              }
+                              alt={otherParticipant?.name}
+                              className="w-8 h-8 rounded-full mr-2 object-cover"
                             />
                           )}
-                          <div 
+                          <div
                             className={`rounded-lg p-3 ${
-                              isCurrentUser 
-                                ? 'bg-emerald-500 text-white rounded-br-none' 
+                              isCurrentUser
+                                ? 'bg-emerald-500 text-white rounded-br-none'
                                 : 'bg-gray-200 text-gray-800 rounded-bl-none'
                             }`}
                           >
                             <p className="text-sm">{msg.content}</p>
-                            <span className={`text-xs mt-1 block ${isCurrentUser ? 'text-emerald-100' : 'text-gray-500'}`}>
+                            <span
+                              className={`text-xs mt-1 block ${
+                                isCurrentUser ? 'text-emerald-100' : 'text-gray-500'
+                              }`}
+                            >
                               {formatTime(msg.timestamp)}
                             </span>
                           </div>
