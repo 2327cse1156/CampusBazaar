@@ -1,9 +1,44 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { ShoppingBag } from 'lucide-react';
-import { SignUp } from '@clerk/clerk-react';
+import { toast } from 'react-hot-toast';
+import { useAuth } from '../context/AuthContext';
 
 const RegisterPage: React.FC = () => {
+  const navigate = useNavigate();
+  const { user } = useAuth(); // we don't register here but later we'll call API
+  const [formData, setFormData] = useState({
+    fullName: '',
+    collegeId: '',
+    email: '',
+    password: '',
+    college: '',
+    avatarUrl: '',
+  });
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // Save fake user to localStorage
+    localStorage.setItem('campusbazaar_user', JSON.stringify({
+      id: Date.now(),
+      name: formData.fullName,
+      email: formData.email,
+      college: formData.college,
+      collegeId: formData.collegeId,
+      avatar: formData.avatarUrl || `https://api.dicebear.com/6.x/initials/svg?seed=${formData.fullName}`,
+      isAdmin: false,
+    }));
+
+    toast.success('Account created! Please login.');
+
+    navigate('/login');
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
@@ -19,7 +54,77 @@ const RegisterPage: React.FC = () => {
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <SignUp routing="path" path="/register" signInUrl="/login" />
+        <form onSubmit={handleSubmit} className="bg-white py-8 px-6 shadow rounded-lg">
+          <div className="space-y-4">
+            <input
+              name="fullName"
+              type="text"
+              placeholder="Full Name"
+              value={formData.fullName}
+              onChange={handleChange}
+              required
+              className="w-full px-4 py-2 border rounded-md"
+            />
+            <input
+              name="collegeId"
+              type="text"
+              placeholder="College ID Number"
+              value={formData.collegeId}
+              onChange={handleChange}
+              required
+              className="w-full px-4 py-2 border rounded-md"
+            />
+            <input
+              name="email"
+              type="email"
+              placeholder="Email"
+              value={formData.email}
+              onChange={handleChange}
+              required
+              className="w-full px-4 py-2 border rounded-md"
+            />
+            <input
+              name="password"
+              type="password"
+              placeholder="Password"
+              value={formData.password}
+              onChange={handleChange}
+              required
+              className="w-full px-4 py-2 border rounded-md"
+            />
+            <input
+              name="college"
+              type="text"
+              placeholder="College Name"
+              value={formData.college}
+              onChange={handleChange}
+              required
+              className="w-full px-4 py-2 border rounded-md"
+            />
+            <input
+              name="avatarUrl"
+              type="url"
+              placeholder="Avatar URL (optional)"
+              value={formData.avatarUrl}
+              onChange={handleChange}
+              className="w-full px-4 py-2 border rounded-md"
+            />
+          </div>
+
+          <button
+            type="submit"
+            className="w-full mt-6 bg-emerald-600 hover:bg-emerald-700 text-white py-2 rounded-md transition"
+          >
+            Register
+          </button>
+
+          <p className="mt-4 text-center text-sm text-gray-600">
+            Already have an account?{" "}
+            <Link to="/login" className="text-emerald-600 hover:underline">
+              Login
+            </Link>
+          </p>
+        </form>
       </div>
     </div>
   );

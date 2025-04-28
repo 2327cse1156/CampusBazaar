@@ -1,17 +1,19 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useUser } from '@clerk/clerk-react';
 import { ShoppingBag } from 'lucide-react';
 import Button from '../components/common/Button';
+import { useAuth } from '../context/AuthContext';
 
 const ProfileSetupPage: React.FC = () => {
-  const { user } = useUser();
   const navigate = useNavigate();
+  const { user } = useAuth();
+
   const [formData, setFormData] = useState({
-    college: '',
+    college: user?.college || '',
     phoneNumber: '',
-    address: ''
+    address: '',
   });
+
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -19,14 +21,15 @@ const ProfileSetupPage: React.FC = () => {
     setIsSubmitting(true);
 
     try {
-      await user?.update({
-        unsafeMetadata: {
-          ...user.unsafeMetadata,
-          college: formData.college,
-          phoneNumber: formData.phoneNumber,
-          address: formData.address
-        }
-      });
+      const updatedUser = {
+        ...user,
+        college: formData.college,
+        phoneNumber: formData.phoneNumber,
+        address: formData.address,
+      };
+
+      localStorage.setItem('campusbazaar_user', JSON.stringify(updatedUser));
+
       navigate('/profile');
     } catch (error) {
       console.error('Error updating profile:', error);

@@ -1,17 +1,17 @@
 import React from 'react';
-import { useUser } from '@clerk/clerk-react';
 import Layout from '../components/layout/Layout';
 import { useProducts } from '../context/ProductContext';
 import ProductList from '../components/products/ProductList';
 import { User, MapPin, Phone, Mail } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 const ProfilePage: React.FC = () => {
-  const { user } = useUser();
+  const { user } = useAuth();
   const { getUserProducts, isLoading } = useProducts();
-  
+
   const userProducts = user ? getUserProducts(user.id) : [];
-  const activeListings = userProducts.filter(p => !p.isSold);
-  const soldListings = userProducts.filter(p => p.isSold);
+  const activeListings = userProducts.filter((p) => !p.isSold);
+  const soldListings = userProducts.filter((p) => p.isSold);
 
   return (
     <Layout>
@@ -22,8 +22,8 @@ const ProfilePage: React.FC = () => {
             <div className="-mt-16 flex items-end space-x-5">
               <div className="flex">
                 <img
-                  src={user?.imageUrl}
-                  alt={user?.fullName}
+                  src={user?.avatarUrl || '/default-avatar.png'}
+                  alt={user?.fullName || 'User Avatar'}
                   className="h-24 w-24 rounded-full ring-4 ring-white bg-white object-cover"
                 />
               </div>
@@ -32,18 +32,20 @@ const ProfilePage: React.FC = () => {
                   {user?.fullName}
                 </h2>
                 <div className="mt-1 flex flex-wrap gap-4 text-sm text-gray-500">
-                  <div className="flex items-center">
-                    <MapPin className="h-4 w-4 mr-1" />
-                    {user?.publicMetadata.college || 'College not specified'}
-                  </div>
+                  {user?.college && (
+                    <div className="flex items-center">
+                      <MapPin className="h-4 w-4 mr-1" />
+                      {user.college}
+                    </div>
+                  )}
                   <div className="flex items-center">
                     <Mail className="h-4 w-4 mr-1" />
-                    {user?.primaryEmailAddress?.emailAddress}
+                    {user?.email}
                   </div>
-                  {user?.publicMetadata.phoneNumber && (
+                  {user?.phoneNumber && (
                     <div className="flex items-center">
                       <Phone className="h-4 w-4 mr-1" />
-                      {user.publicMetadata.phoneNumber}
+                      {user.phoneNumber}
                     </div>
                   )}
                 </div>
