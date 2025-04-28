@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { ChatMessage, Conversation, User } from '../types';
-import { mockConversations,mockMessages } from '../data/mockData';
+import { mockConversations, mockMessages } from '../data/mockData';
 import { useAuth } from './AuthContext';
 
 interface ChatContextType {
