@@ -30,10 +30,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   useEffect(() => {
     if (!conversation || !currentUser) return;
 
-    // Create WebSocket connection
     socketRef.current = new WebSocket(`wss://yourserver.com/ws/chat/${conversation.id}`);
 
-    // On receiving a message
     socketRef.current.onmessage = (event) => {
       const newMessage: ChatMessage = JSON.parse(event.data);
       setMessages((prevMessages) => [...prevMessages, newMessage]);
@@ -56,21 +54,30 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     };
   }, [conversation?.id, currentUser?.id]);
 
-  const handleSendMessage = (e: React.FormEvent) => {
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!message.trim() || !currentUser || !conversation) return;
 
     if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
+      setIsSending(true);
+
       const outgoingMessage: ChatMessage = {
-        id: Date.now().toString(), // You can change it based on backend
+        id: Date.now().toString(),
         conversationId: conversation.id,
         senderId: currentUser.id,
         content: message,
         timestamp: new Date().toISOString(),
       };
-      socketRef.current.send(JSON.stringify(outgoingMessage));
-      setMessages((prev) => [...prev, outgoingMessage]); // Optimistic UI update
-      setMessage('');
+
+      try {
+        socketRef.current.send(JSON.stringify(outgoingMessage));
+        setMessages((prev) => [...prev, outgoingMessage]);
+        setMessage('');
+      } catch (error) {
+        console.error('Failed to send message:', error);
+      } finally {
+        setIsSending(false);
+      }
     } else {
       console.error('WebSocket not connected');
     }
@@ -132,7 +139,6 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
         {isLoading ? (
           <div className="flex justify-center py-4">
-            {/* Skeleton loading */}
             <div className="animate-pulse space-y-4 w-full max-w-md">
               <div className="flex items-end">
                 <div className="h-8 w-8 rounded-full bg-gray-300 mr-2"></div>
@@ -209,7 +215,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       </div>
 
       {/* Message Input */}
-      <form onSubmit={handleSendMessage} className="p-4 border-t">
+      <form onSubmit={handleSendMessage} className="p-4 border-t space-y-2">
         <div className="flex items-center space-x-2">
           <input
             type="text"
@@ -227,6 +233,9 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
             <Send className="h-5 w-5" />
           </button>
         </div>
+        {isSending && (
+          <p className="text-xs text-gray-500 text-center">Sending...</p>
+        )}
       </form>
     </div>
   );

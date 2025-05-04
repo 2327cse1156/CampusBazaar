@@ -1,71 +1,103 @@
+// src/pages/Register.tsx
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-hot-toast";
 
-const Login: React.FC = () => {
+const Register = () => {
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    password: "",
+    college: "",
+    collegeId: "",
+    avatar: "",
+  });
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-
-    // Fake frontend authentication (you can replace later with real API)
-    const storedUser = JSON.parse(localStorage.getItem("user") || "null");
-
-    if (storedUser && storedUser.email === email && storedUser.password === password) {
-      localStorage.setItem("isAuthenticated", "true");
-      navigate("/dashboard");
-    } else {
-      setError("Invalid email or password.");
-    }
+    localStorage.setItem("user", JSON.stringify(formData));
+    toast.success("Registered Successfully!");
+    navigate("/login");
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-emerald-100 px-4">
-      <div className="bg-white p-8 rounded-2xl shadow-lg w-full max-w-md">
-        <h2 className="text-2xl font-bold text-center text-emerald-600 mb-6">Welcome Back</h2>
+    <div className="flex justify-center items-center min-h-screen bg-emerald-50">
+      <form onSubmit={handleSubmit} className="bg-white p-8 rounded-xl shadow-md w-full max-w-md space-y-6">
+        <h1 className="text-2xl font-bold text-emerald-600 text-center">Register</h1>
 
-        {error && <p className="text-red-500 text-sm mb-4 text-center">{error}</p>}
+        <input
+          type="text"
+          name="name"
+          placeholder="Full Name"
+          value={formData.name}
+          onChange={handleChange}
+          required
+          className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-400"
+        />
 
-        <form onSubmit={handleLogin} className="space-y-5">
-          <div>
-            <label className="block mb-1 font-medium">Email</label>
-            <input
-              type="email"
-              className="w-full px-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-emerald-400"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </div>
+        <input
+          type="email"
+          name="email"
+          placeholder="Email"
+          value={formData.email}
+          onChange={handleChange}
+          required
+          className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-400"
+        />
 
-          <div>
-            <label className="block mb-1 font-medium">Password</label>
-            <input
-              type="password"
-              className="w-full px-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-emerald-400"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </div>
+        <input
+          type="password"
+          name="password"
+          placeholder="Password"
+          value={formData.password}
+          onChange={handleChange}
+          required
+          className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-400"
+        />
 
-          <button
-            type="submit"
-            className="w-full bg-emerald-600 text-white py-2 rounded-full font-semibold hover:bg-emerald-700 transition"
-          >
-            Login
-          </button>
+        <input
+          type="text"
+          name="college"
+          placeholder="College Name"
+          value={formData.college}
+          onChange={handleChange}
+          required
+          className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-400"
+        />
 
-          <p className="text-center text-sm mt-4">
-            Don't have an account?{' '}
-            <a href="/register" className="text-emerald-600 hover:underline">Register</a>
-          </p>
-        </form>
-      </div>
+        <input
+          type="text"
+          name="collegeId"
+          placeholder="College ID Number"
+          value={formData.collegeId}
+          onChange={handleChange}
+          required
+          className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-400"
+        />
+
+        <input
+          type="text"
+          name="avatar"
+          placeholder="Avatar URL (optional)"
+          value={formData.avatar}
+          onChange={handleChange}
+          className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-400"
+        />
+
+        <button
+          type="submit"
+          className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-lg transition"
+        >
+          Register
+        </button>
+      </form>
     </div>
   );
 };
 
-export default Login;
+export default Register;

@@ -1,19 +1,20 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingBag } from 'lucide-react';
-import { toast } from 'react-hot-toast';
-import { useAuth } from '../context/AuthContext';
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { ShoppingBag } from "lucide-react";
+import { toast } from "react-hot-toast";
+import { useAuth } from "../context/AuthContext";
 
 const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
-  const { user } = useAuth(); // we don't register here but later we'll call API
+  const { user } = useAuth();
+
   const [formData, setFormData] = useState({
-    fullName: '',
-    collegeId: '',
-    email: '',
-    password: '',
-    college: '',
-    avatarUrl: '',
+    fullName: "",
+    collegeId: "",
+    email: "",
+    password: "",
+    college: "",
+    avatarUrl: "",
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -23,26 +24,39 @@ const RegisterPage: React.FC = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Save fake user to localStorage
-    localStorage.setItem('campusbazaar_user', JSON.stringify({
+    const users = JSON.parse(localStorage.getItem("campusbazaar-users") || "[]");
+
+    const emailExists = users.some((u: any) => u.email === formData.email);
+    if (emailExists) {
+      toast.error("Email already registered.");
+      return;
+    }
+
+    const newUser = {
       id: Date.now(),
       name: formData.fullName,
       email: formData.email,
+      password: formData.password, // needed for login
       college: formData.college,
       collegeId: formData.collegeId,
-      avatar: formData.avatarUrl || `https://api.dicebear.com/6.x/initials/svg?seed=${formData.fullName}`,
+      avatarUrl: formData.avatarUrl,
       isAdmin: false,
-    }));
+    };
 
-    toast.success('Account created! Please login.');
+    users.push(newUser);
+    localStorage.setItem("campusbazaar-users", JSON.stringify(users));
 
-    navigate('/login');
+    toast.success("Account created! Please login.");
+    navigate("/login");
   };
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <Link to="/" className="flex items-center justify-center text-emerald-600 mb-5">
+        <Link
+          to="/"
+          className="flex items-center justify-center text-emerald-600 mb-5"
+        >
           <ShoppingBag className="h-10 w-10" />
         </Link>
         <h2 className="text-center text-3xl font-extrabold text-gray-900">
@@ -54,7 +68,10 @@ const RegisterPage: React.FC = () => {
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <form onSubmit={handleSubmit} className="bg-white py-8 px-6 shadow rounded-lg">
+        <form
+          onSubmit={handleSubmit}
+          className="bg-white py-8 px-6 shadow rounded-lg"
+        >
           <div className="space-y-4">
             <input
               name="fullName"
@@ -103,7 +120,7 @@ const RegisterPage: React.FC = () => {
             />
             <input
               name="avatarUrl"
-              type="url"
+              type="text"
               placeholder="Avatar URL (optional)"
               value={formData.avatarUrl}
               onChange={handleChange}

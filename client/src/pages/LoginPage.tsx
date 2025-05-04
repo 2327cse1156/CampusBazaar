@@ -1,35 +1,36 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ShoppingBag } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 
 const LoginPage: React.FC = () => {
-  const { login } = useAuth();
+  const { login, user } = useAuth();
   const navigate = useNavigate();
-  
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      navigate('/dashboard');
+    }
+  }, [user, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    try {
-      const success = await login(email, password);
-      if (success) {
-        toast.success('Logged in successfully!');
-        navigate('/dashboard');
-      } else {
-        toast.error('Invalid email or password');
-      }
-    } catch (error) {
-      console.error('Login error:', error);
-      toast.error('Something went wrong. Please try again.');
-    } finally {
-      setIsSubmitting(false);
+    const success = await login(email, password);
+    if (success) {
+      toast.success('Logged in successfully!');
+      navigate('/dashboard');
+    } else {
+      toast.error('Invalid email or password');
     }
+
+    setIsSubmitting(false);
   };
 
   return (

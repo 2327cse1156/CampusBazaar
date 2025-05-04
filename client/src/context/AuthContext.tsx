@@ -27,44 +27,53 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('campusbazaar-current-user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
+    try {
+      const storedUser = localStorage.getItem('campusbazaar-current-user');
+      if (storedUser) {
+        setUser(JSON.parse(storedUser));
+      }
+    } catch (err) {
+      console.error('Failed to parse current user from localStorage:', err);
     }
     setIsLoading(false);
   }, []);
 
-  const login = async (email: string, password: string) => {
-    const users = JSON.parse(localStorage.getItem('campusbazaar-users') || '[]') as User[];
-    const foundUser = users.find(u => u.email === email && u.password === password);
+  const login = async (email: string, password: string): Promise<boolean> => {
+    try {
+      const users = JSON.parse(localStorage.getItem('campusbazaar-users') || '[]') as User[];
+      const foundUser = users.find(u => u.email === email && u.password === password);
 
-    if (foundUser) {
-      localStorage.setItem('campusbazaar-current-user', JSON.stringify(foundUser));
-      setUser(foundUser);
-      return true;
-    } else {
-      return false;
+      if (foundUser) {
+        localStorage.setItem('campusbazaar-current-user', JSON.stringify(foundUser));
+        setUser(foundUser);
+        return true;
+      }
+    } catch (err) {
+      console.error('Login error:', err);
     }
+    return false;
   };
 
-  const register = async (data: Omit<User, 'id'>) => {
-    const users = JSON.parse(localStorage.getItem('campusbazaar-users') || '[]') as User[];
+  const register = async (data: Omit<User, 'id'>): Promise<boolean> => {
+    try {
+      const users = JSON.parse(localStorage.getItem('campusbazaar-users') || '[]') as User[];
+      const emailExists = users.some(u => u.email === data.email);
+      if (emailExists) return false;
 
-    const emailAlreadyExists = users.some(u => u.email === data.email);
-    if (emailAlreadyExists) {
+      const newUser: User = {
+        id: Date.now().toString(),
+        ...data,
+      };
+
+      const updatedUsers = [...users, newUser];
+      localStorage.setItem('campusbazaar-users', JSON.stringify(updatedUsers));
+      localStorage.setItem('campusbazaar-current-user', JSON.stringify(newUser));
+      setUser(newUser);
+      return true;
+    } catch (err) {
+      console.error('Registration error:', err);
       return false;
     }
-
-    const newUser: User = {
-      id: Date.now().toString(),
-      ...data,
-    };
-
-    const updatedUsers = [...users, newUser];
-    localStorage.setItem('campusbazaar-users', JSON.stringify(updatedUsers));
-    localStorage.setItem('campusbazaar-current-user', JSON.stringify(newUser));
-    setUser(newUser);
-    return true;
   };
 
   const logout = () => {
@@ -79,7 +88,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   );
 };
 
-export const useAuth = () => {
+export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
   if (!context) {
     throw new Error('useAuth must be used within an AuthProvider');

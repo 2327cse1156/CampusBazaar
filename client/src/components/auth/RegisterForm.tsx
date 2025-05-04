@@ -1,4 +1,3 @@
-// src/pages/Register.tsx
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
@@ -20,14 +19,28 @@ const Register = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    localStorage.setItem("user", JSON.stringify(formData));
+
+    const users = JSON.parse(localStorage.getItem("campusbazaar-users") || "[]");
+
+    const userExists = users.some((user: any) => user.email === formData.email);
+    if (userExists) {
+      toast.error("A user with this email already exists.");
+      return;
+    }
+
+    const updatedUsers = [...users, formData];
+    localStorage.setItem("campusbazaar-users", JSON.stringify(updatedUsers));
+
     toast.success("Registered Successfully!");
     navigate("/login");
   };
 
   return (
     <div className="flex justify-center items-center min-h-screen bg-emerald-50">
-      <form onSubmit={handleSubmit} className="bg-white p-8 rounded-xl shadow-md w-full max-w-md space-y-6">
+      <form
+        onSubmit={handleSubmit}
+        className="bg-white p-8 rounded-xl shadow-md w-full max-w-md space-y-6"
+      >
         <h1 className="text-2xl font-bold text-emerald-600 text-center">Register</h1>
 
         <input
